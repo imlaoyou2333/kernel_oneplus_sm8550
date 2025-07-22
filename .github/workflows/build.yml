@@ -23,15 +23,15 @@ jobs:
 
     - name: Download Clang Toolchain
       run: |
-        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r450784e.tar.gz
-        mkdir clang-r450784e
-        tar -xzf clang-r450784e.tar.gz -C clang-r450784e
-        rm clang-r450784e.tar.gz
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz
+        mkdir clang-r522817
+        tar -xzf clang-r522817.tar.gz -C clang-r522817
+        rm clang-r522817.tar.gz
 
     - name: Set Environment Variables
       run: |
-        echo "CLANG_PATH=$(pwd)/clang-r450784e/bin" >> $GITHUB_ENV
-        echo "PATH=$PATH:$(pwd)/clang-r450784e/bin" >> $GITHUB_ENV
+        echo "CLANG_PATH=$(pwd)/clang-r522817/bin" >> $GITHUB_ENV
+        echo "PATH=$PATH:$(pwd)/clang-r522817/bin" >> $GITHUB_ENV
 
     - name: Build Kernel
       run: |
