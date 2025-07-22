@@ -1,0 +1,62 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [alpha-15.2-no-ksu]  # 指定分支触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 超时设置为3小时
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        repository: 'imlaoyou2333/kernel_oneplus_sm8550'
+        ref: 'alpha-15.2-no-ksu'  # 指定分支
+        submodules: recursive  # 包含子模块
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev
+
+    - name: Download Clang Toolchain
+      run: |
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r450784e.tar.gz
+        mkdir clang-r450784e
+        tar -xzf clang-r450784e.tar.gz -C clang-r450784e
+        rm clang-r450784e.tar.gz
+
+    - name: Set Environment Variables
+      run: |
+        echo "CLANG_PATH=$(pwd)/clang-r450784e/bin" >> $GITHUB_ENV
+        echo "PATH=$PATH:$(pwd)/clang-r450784e/bin" >> $GITHUB_ENV
+
+    - name: Build Kernel
+      run: |
+        make O=out ARCH=arm64 gki_defconfig
+        make -j$(nproc) O=out ARCH=arm64 \
+          CC=clang \
+          LD=ld.lld \
+          AR=llvm-ar \
+          NM=llvm-nm \
+          OBJCOPY=llvm-objcopy \
+          OBJDUMP=llvm-objdump \
+          STRIP=llvm-strip \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
+
+    - name: Package Kernel Images
+      run: |
+        cd out/arch/arm64/boot
+        zip -r kernel_images.zip Image*
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: kernel_images
+        path: out/arch/arm64/boot/kernel_images.zip
